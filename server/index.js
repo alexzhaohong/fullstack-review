@@ -19,17 +19,28 @@ app.post('/repos', function (req, res) {
   // This route should take the github username provided
   // and get the repo information from the github API, then
   // save the repo information in the database
-  console.log('POST ', req.body);
+  console.log('POST route', req.body);
   github.getReposByUsername(req, res, (error, response, body) => {
     if (!error && response.statusCode == 200) {
       const info = JSON.parse(body);
+
       console.log(response.statusCode, 'from GitHub API') // 200
       console.log(response.headers['x-ratelimit-remaining'], ' requests remaining')
-      console.log(info.length + ` repos for ${info[0].owner.login}`)
+      console.log(info.length + ` repos for ${req.body.term}`)
 
-      database.save(null, info);
-
-      res.send('200');
+      if (!info.length) {
+        res.status(500).send('No repos for username');
+      } else {
+        for (let repo of info) {
+          database.save(repo, (err, document)=> {
+            if (err) {
+              console.log('error error')
+              res.status(500).send(err)
+            }})}
+        res.send({done:'done'});
+      }
+    } else {
+      res.status(response.statusCode).send('err')
     }
   })
 });
@@ -37,9 +48,14 @@ app.post('/repos', function (req, res) {
 app.get('/repos', function (req, res) {
   // TODO - your code here!
   // This route should send back the top 25 repos
-  console.log('get route');
-  console.log(req.body);
-  res.send('200');
+  console.log('GET route');
+  database.fetchTwentyFive(req, res, (err, documents) => {
+    if (err) {
+      res.status(500).send(err)
+    } else {
+      res.send(documents);
+    }
+  })
 });
 
 let port = 1128;

@@ -3,6 +3,8 @@ import ReactDOM from 'react-dom';
 import $ from 'jquery';
 import Search from './components/Search.jsx';
 import RepoList from './components/RepoList.jsx';
+import RepoListEntry from './components/RepoListEntry.jsx';
+
 
 class App extends React.Component {
   constructor(props) {
@@ -12,6 +14,7 @@ class App extends React.Component {
     }
 
   }
+
 
   search (term) {
     console.log(`${term} was searched`);
@@ -27,8 +30,25 @@ class App extends React.Component {
 
     fetch(url, options)
       .then(response => response.json())
-      .then(data => console.log(data))
+      .then(term => this.refreshRepos(term))
       .catch(error => console.error('Fetch operation problem:', error));
+  }
+
+  refreshRepos (term) {
+    let url = '/repos';
+
+    fetch(url)
+      .then(response => response.json())
+      .then(data => this.updateRepoState(data))
+      .catch(error => console.error('Fetch operation problem:', error));
+  }
+
+  updateRepoState (data) {
+    this.setState({repos: data});
+  }
+
+  componentDidMount() {
+    this.refreshRepos('hello');
   }
 
   render () {
